@@ -83,6 +83,10 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
@@ -94,12 +98,20 @@
     @apply bg-card/80 backdrop-blur-xl border border-white/10 rounded-3xl;
   }
 
+  .glass-modal {
+    @apply bg-card/90 backdrop-blur-2xl border border-white/10;
+  }
+
   .glow-primary {
     box-shadow: 0 0 60px -12px hsl(var(--primary) / 0.4);
   }
 
   .glow-secondary {
     box-shadow: 0 0 60px -12px hsl(var(--secondary) / 0.4);
+  }
+
+  .glow-border {
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.2), inset 0 0 30px rgba(168, 85, 247, 0.05);
   }
 
   .gradient-border {
@@ -117,5 +129,29 @@
       linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
       linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px);
     background-size: 60px 60px;
+  }
+
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Custom scrollbar for chat */
+  .chat-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .chat-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .chat-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+  .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
   }
 }
