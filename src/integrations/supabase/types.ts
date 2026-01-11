@@ -16,7 +16,11 @@ export type Database = {
     Tables: {
       regulatory_updates: {
         Row: {
+          category: string | null
+          created_at: string | null
+          detailed_analysis: string[] | null
           dev_action: string | null
+          dev_impact_score: number | null
           id: number
           risk_level: string | null
           source_url: string | null
@@ -24,7 +28,11 @@ export type Database = {
           title: string
         }
         Insert: {
+          category?: string | null
+          created_at?: string | null
+          detailed_analysis?: string[] | null
           dev_action?: string | null
+          dev_impact_score?: number | null
           id?: number
           risk_level?: string | null
           source_url?: string | null
@@ -32,7 +40,11 @@ export type Database = {
           title: string
         }
         Update: {
+          category?: string | null
+          created_at?: string | null
+          detailed_analysis?: string[] | null
           dev_action?: string | null
+          dev_impact_score?: number | null
           id?: number
           risk_level?: string | null
           source_url?: string | null
