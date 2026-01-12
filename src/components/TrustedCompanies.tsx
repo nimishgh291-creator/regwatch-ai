@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
 
 const companies = [
-  { name: "Webflow", logo: "W" },
-  { name: "Slack", logo: "S" },
-  { name: "Google", logo: "G" },
-  { name: "Atlassian", logo: "A" },
-  { name: "Spotify", logo: "Sp" },
-  { name: "GitLab", logo: "GL" },
+  { name: "Razorpay", initials: "R" },
+  { name: "Paytm", initials: "P" },
+  { name: "PhonePe", initials: "Ph" },
+  { name: "CRED", initials: "C" },
+  { name: "Zerodha", initials: "Z" },
+  { name: "Groww", initials: "G" },
 ];
 
 const TrustedCompanies = () => {
@@ -30,9 +30,9 @@ const TrustedCompanies = () => {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="glass-card p-8 glow-primary"
+          className="glass-card p-8"
         >
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center justify-items-center">
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 lg:gap-16">
             {companies.map((company, index) => (
               <motion.div
                 key={company.name}
@@ -40,12 +40,12 @@ const TrustedCompanies = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
+                className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-lg group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
-                  {company.logo}
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-semibold text-sm group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
+                  {company.initials}
                 </div>
-                <span className="font-medium">{company.name}</span>
+                <span className="font-medium text-sm">{company.name}</span>
               </motion.div>
             ))}
           </div>
