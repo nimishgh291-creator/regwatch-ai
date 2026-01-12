@@ -1,1 +1,7 @@
 project_id = "ybswkkhufynqjfdxkbtm"
+
+[functions.chat-regulatory]
+verify_jwt = false
+
+[functions.analyze-market-impact]
+verify_jwt = false

@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ExternalLink, AlertTriangle, CheckCircle, Info, Send, Loader2, Bot } from "lucide-react";
+import { X, ExternalLink, AlertTriangle, CheckCircle, Info, Send, Loader2, Bot, TrendingUp } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import DevImpactGauge from "./DevImpactGauge";
+import { toast } from "@/hooks/use-toast";
 
 interface RegulatoryUpdate {
   id: number;
@@ -19,6 +20,12 @@ interface RegulatoryUpdate {
 interface Message {
   role: "user" | "assistant";
   content: string;
+}
+
+interface MarketImpactResult {
+  analysis: string;
+  sources: { title: string; url: string }[];
+  tavilyAnswer: string | null;
 }
 
 interface UpdateDetailModalProps {
@@ -49,6 +56,8 @@ const UpdateDetailModal = ({ update, isOpen, onClose }: UpdateDetailModalProps) 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [marketImpact, setMarketImpact] = useState<MarketImpactResult | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -63,8 +72,65 @@ const UpdateDetailModal = ({ update, isOpen, onClose }: UpdateDetailModalProps) 
     if (!isOpen) {
       setMessages([]);
       setInputValue("");
+      setMarketImpact(null);
     }
   }, [isOpen]);
+
+  const handleAnalyzeMarketImpact = async () => {
+    if (!update || isAnalyzing) return;
+
+    setIsAnalyzing(true);
+    setMarketImpact(null);
+
+    try {
+      const response = await fetch(
+        `https://ybswkkhufynqjfdxkbtm.supabase.co/functions/v1/analyze-market-impact`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlic3dra2h1ZnlucWpmZHhrYnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMzU0MzYsImV4cCI6MjA4MzcxMTQzNn0.XRUXFUdb_Pi3T3DZPZglF6rENjJYbZvgA7sUpNmnyG8`,
+          },
+          body: JSON.stringify({
+            title: update.title,
+            summary: update.summary,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast({
+            title: "Rate limit exceeded",
+            description: "Please try again later.",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (response.status === 402) {
+          toast({
+            title: "Credits required",
+            description: "Please add credits to continue using AI features.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error("Failed to analyze market impact");
+      }
+
+      const data = await response.json();
+      setMarketImpact(data);
+    } catch (error) {
+      console.error("Market impact analysis error:", error);
+      toast({
+        title: "Analysis failed",
+        description: error instanceof Error ? error.message : "Unable to analyze market impact.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !update || isLoading) return;
@@ -76,12 +142,12 @@ const UpdateDetailModal = ({ update, isOpen, onClose }: UpdateDetailModalProps) 
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-regulatory`,
+        `https://ybswkkhufynqjfdxkbtm.supabase.co/functions/v1/chat-regulatory`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlic3dra2h1ZnlucWpmZHhrYnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMzU0MzYsImV4cCI6MjA4MzcxMTQzNn0.XRUXFUdb_Pi3T3DZPZglF6rENjJYbZvgA7sUpNmnyG8`,
           },
           body: JSON.stringify({
             messages: [...messages, { role: "user", content: userMessage }],
@@ -275,17 +341,77 @@ const UpdateDetailModal = ({ update, isOpen, onClose }: UpdateDetailModalProps) 
                   </div>
                 )}
 
-                {/* View PDF Button */}
-                {update.source_url && (
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {update.source_url && (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="flex-1"
+                      onClick={() => window.open(update.source_url!, "_blank")}
+                    >
+                      <ExternalLink className="h-5 w-5 mr-2" />
+                      View Original PDF
+                    </Button>
+                  )}
                   <Button
                     variant="hero"
                     size="lg"
-                    className="w-full"
-                    onClick={() => window.open(update.source_url!, "_blank")}
+                    className="flex-1"
+                    onClick={handleAnalyzeMarketImpact}
+                    disabled={isAnalyzing}
                   >
-                    <ExternalLink className="h-5 w-5 mr-2" />
-                    View Original PDF
+                    {isAnalyzing ? (
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    ) : (
+                      <TrendingUp className="h-5 w-5 mr-2" />
+                    )}
+                    {isAnalyzing ? "Analyzing..." : "Analyze Market Impact"}
                   </Button>
+                </div>
+
+                {/* Market Impact Results */}
+                {marketImpact && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-5 rounded-2xl bg-gradient-to-br from-secondary/10 to-primary/10 border border-secondary/30"
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 rounded-xl bg-gradient-to-br from-secondary to-primary">
+                        <TrendingUp className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold">Market Impact Analysis</h3>
+                    </div>
+                    
+                    <div className="prose prose-invert prose-sm max-w-none mb-4">
+                      <p className="text-foreground/90 whitespace-pre-wrap leading-relaxed">
+                        {marketImpact.analysis}
+                      </p>
+                    </div>
+
+                    {marketImpact.sources.length > 0 && (
+                      <div className="border-t border-white/10 pt-4 mt-4">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                          News Sources
+                        </h4>
+                        <div className="space-y-2">
+                          {marketImpact.sources.slice(0, 3).map((source, index) => (
+                            <a
+                              key={index}
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+                            >
+                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                              <span className="line-clamp-1">{source.title}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
                 )}
 
                 {/* AI Chat Section */}
