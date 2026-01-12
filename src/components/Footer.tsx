@@ -1,11 +1,32 @@
 import { Shield } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   const footerLinks = {
-    Product: ["Features", "Pricing", "Integrations", "Changelog"],
-    Company: ["About", "Blog", "Careers", "Press"],
-    Resources: ["Documentation", "API Reference", "Guides", "Support"],
-    Legal: ["Privacy", "Terms", "Security", "Cookies"],
+    Product: [
+      { label: "Features", href: "/#features" },
+      { label: "Updates", href: "/updates" },
+      { label: "Integrations", href: "#" },
+      { label: "Changelog", href: "#" },
+    ],
+    Company: [
+      { label: "About", href: "/about" },
+      { label: "Blog", href: "#" },
+      { label: "Careers", href: "#" },
+      { label: "Press", href: "#" },
+    ],
+    Resources: [
+      { label: "Documentation", href: "#" },
+      { label: "API Reference", href: "#" },
+      { label: "Guides", href: "#" },
+      { label: "Support", href: "#" },
+    ],
+    Legal: [
+      { label: "Privacy", href: "#" },
+      { label: "Terms", href: "#" },
+      { label: "Security", href: "#" },
+      { label: "Cookies", href: "#" },
+    ],
   };
 
   return (
@@ -14,12 +35,12 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <a href="/" className="flex items-center gap-2 mb-4">
+            <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                 <Shield className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="font-bold text-lg">RegWatch</span>
-            </a>
+            </Link>
             <p className="text-sm text-muted-foreground">
               AI-powered compliance for modern fintech teams.
             </p>
@@ -31,13 +52,22 @@ const Footer = () => {
               <h3 className="font-semibold mb-4 text-sm">{category}</h3>
               <ul className="space-y-3">
                 {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {link}
-                    </a>
+                  <li key={link.label}>
+                    {link.href.startsWith("/") ? (
+                      <Link
+                        to={link.href}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
