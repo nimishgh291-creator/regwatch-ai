@@ -1,16 +1,18 @@
 import { motion } from "framer-motion";
 import { Menu, X, Shield } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
 
   const navItems = [
-    { label: "Features", href: "#features" },
-    { label: "Updates", href: "#updates" },
-    { label: "Testimonials", href: "#testimonials" },
-    { label: "Contact", href: "#contact" },
+    { label: "Features", href: isHomePage ? "#features" : "/#features" },
+    { label: "Updates", href: "/updates" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: isHomePage ? "#contact" : "/#contact" },
   ];
 
   return (
@@ -24,35 +26,45 @@ const Navbar = () => {
         <div className="glass-card px-6 py-3">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <a href="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                 <Shield className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="font-bold text-lg">RegWatch</span>
-            </a>
+            </Link>
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-8">
               {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {item.label}
-                </a>
+                item.href.startsWith("/") ? (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                )
               ))}
             </div>
 
-            {/* CTA */}
-            <div className="hidden md:flex items-center gap-3">
+            {/* CTA - Hidden for now */}
+            {/* <div className="hidden md:flex items-center gap-3">
               <Button variant="ghost" size="sm">
                 Log in
               </Button>
               <Button variant="hero" size="sm">
                 Get Started
               </Button>
-            </div>
+            </div> */}
 
             {/* Mobile menu button */}
             <button
@@ -73,23 +85,35 @@ const Navbar = () => {
             >
               <div className="flex flex-col gap-4">
                 {navItems.map((item) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {item.label}
-                  </a>
+                  item.href.startsWith("/") ? (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.label}
+                    </a>
+                  )
                 ))}
-                <div className="flex flex-col gap-2 pt-4">
+                {/* Auth buttons hidden for now */}
+                {/* <div className="flex flex-col gap-2 pt-4">
                   <Button variant="ghost" size="sm">
                     Log in
                   </Button>
                   <Button variant="hero" size="sm">
                     Get Started
                   </Button>
-                </div>
+                </div> */}
               </div>
             </motion.div>
           )}
