@@ -1,10 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ExternalLink, AlertTriangle, CheckCircle, Info, Send, Loader2, Bot, TrendingUp } from "lucide-react";
+import { X, ExternalLink, AlertTriangle, CheckCircle, Info, Send, Loader2, Bot, TrendingUp, Download, Timer } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import DevImpactGauge from "./DevImpactGauge";
 import { toast } from "@/hooks/use-toast";
-
+import { exportToPDF } from "@/utils/pdfExport";
 interface RegulatoryUpdate {
   id: number;
   title: string;
@@ -58,7 +58,33 @@ const UpdateDetailModal = ({ update, isOpen, onClose }: UpdateDetailModalProps) 
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [marketImpact, setMarketImpact] = useState<MarketImpactResult | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Timer for AI response
+  useEffect(() => {
+    if (isLoading) {
+      setElapsedTime(0);
+      timerRef.current = setInterval(() => {
+        setElapsedTime((prev) => prev + 0.1);
+      }, 100);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isLoading]);
+
+  const handleExportPDF = () => {
+    if (!update) return;
+    exportToPDF(update, marketImpact);
+    toast({ title: "PDF exported!", description: "Your report has been downloaded." });
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -351,9 +377,18 @@ const UpdateDetailModal = ({ update, isOpen, onClose }: UpdateDetailModalProps) 
                       onClick={() => window.open(update.source_url!, "_blank")}
                     >
                       <ExternalLink className="h-5 w-5 mr-2" />
-                      View Original PDF
+                      View Original
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="flex-1"
+                    onClick={handleExportPDF}
+                  >
+                    <Download className="h-5 w-5 mr-2" />
+                    Export PDF
+                  </Button>
                   <Button
                     variant="hero"
                     size="lg"
@@ -366,7 +401,7 @@ const UpdateDetailModal = ({ update, isOpen, onClose }: UpdateDetailModalProps) 
                     ) : (
                       <TrendingUp className="h-5 w-5 mr-2" />
                     )}
-                    {isAnalyzing ? "Analyzing..." : "Analyze Market Impact"}
+                    {isAnalyzing ? "Analyzing..." : "Market Impact"}
                   </Button>
                 </div>
 
