@@ -18,6 +18,69 @@ interface MarketImpactResult {
   tavilyAnswer: string | null;
 }
 
+// Helper function to sanitize text for PDF - removes special characters that cause encoding issues
+const sanitizeText = (text: string): string => {
+  if (!text) return "";
+  
+  return text
+    // Replace common problematic characters
+    .replace(/['']/g, "'")
+    .replace(/[""]/g, '"')
+    .replace(/[–—]/g, "-")
+    .replace(/…/g, "...")
+    .replace(/×/g, "x")
+    .replace(/÷/g, "/")
+    .replace(/≤/g, "<=")
+    .replace(/≥/g, ">=")
+    .replace(/≠/g, "!=")
+    .replace(/±/g, "+/-")
+    .replace(/°/g, " degrees")
+    .replace(/€/g, "EUR")
+    .replace(/£/g, "GBP")
+    .replace(/¥/g, "JPY")
+    .replace(/₹/g, "INR")
+    // Replace backticks and special quotes
+    .replace(/[`´]/g, "'")
+    // Replace special mathematical symbols
+    .replace(/[∑∏∫∂∆∇√∞]/g, "")
+    // Replace superscript/subscript numbers
+    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, (match) => {
+      const map: Record<string, string> = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9' };
+      return `^${map[match] || ''}`;
+    })
+    .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, (match) => {
+      const map: Record<string, string> = { '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9' };
+      return `_${map[match] || ''}`;
+    })
+    // Replace bullet points
+    .replace(/[•◦▪▫●○]/g, "-")
+    // Replace arrows
+    .replace(/[→←↑↓↔↕⇒⇐⇑⇓]/g, "->")
+    // Replace other special Unicode characters with ASCII equivalents or remove them
+    .replace(/[^\x00-\x7F]/g, (char) => {
+      // Try to get ASCII equivalent, otherwise remove
+      const code = char.charCodeAt(0);
+      if (code >= 0x00C0 && code <= 0x00C5) return 'A';
+      if (code >= 0x00C8 && code <= 0x00CB) return 'E';
+      if (code >= 0x00CC && code <= 0x00CF) return 'I';
+      if (code >= 0x00D2 && code <= 0x00D6) return 'O';
+      if (code >= 0x00D9 && code <= 0x00DC) return 'U';
+      if (code >= 0x00E0 && code <= 0x00E5) return 'a';
+      if (code >= 0x00E8 && code <= 0x00EB) return 'e';
+      if (code >= 0x00EC && code <= 0x00EF) return 'i';
+      if (code >= 0x00F2 && code <= 0x00F6) return 'o';
+      if (code >= 0x00F9 && code <= 0x00FC) return 'u';
+      if (code === 0x00D1) return 'N';
+      if (code === 0x00F1) return 'n';
+      if (code === 0x00C7) return 'C';
+      if (code === 0x00E7) return 'c';
+      return '';
+    })
+    // Clean up any double spaces
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 export const exportToPDF = (
   update: RegulatoryUpdate,
   marketImpact?: MarketImpactResult | null
@@ -30,9 +93,10 @@ export const exportToPDF = (
 
   // Helper function to add wrapped text
   const addWrappedText = (text: string, fontSize: number, isBold = false) => {
+    const sanitized = sanitizeText(text);
     doc.setFontSize(fontSize);
     doc.setFont("helvetica", isBold ? "bold" : "normal");
-    const lines = doc.splitTextToSize(text, contentWidth);
+    const lines = doc.splitTextToSize(sanitized, contentWidth);
     
     lines.forEach((line: string) => {
       if (yPosition > 270) {
@@ -73,7 +137,7 @@ export const exportToPDF = (
   if (update.category) {
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Category: ${update.category}`, margin, yPosition);
+    doc.text(`Category: ${sanitizeText(update.category)}`, margin, yPosition);
     yPosition += 6;
   }
 
@@ -116,10 +180,15 @@ export const exportToPDF = (
       yPosition = 20;
     }
     
+    // Calculate height needed for action text
+    const sanitizedAction = sanitizeText(update.dev_action);
+    const actionLines = doc.splitTextToSize(sanitizedAction, contentWidth - 10);
+    const boxHeight = Math.max(30, actionLines.length * 5 + 15);
+    
     doc.setFillColor(239, 246, 255);
-    doc.roundedRect(margin, yPosition, contentWidth, 30, 3, 3, "F");
+    doc.roundedRect(margin, yPosition, contentWidth, boxHeight, 3, 3, "F");
     doc.setDrawColor(99, 102, 241);
-    doc.roundedRect(margin, yPosition, contentWidth, 30, 3, 3, "S");
+    doc.roundedRect(margin, yPosition, contentWidth, boxHeight, 3, 3, "S");
     
     yPosition += 8;
     doc.setFontSize(10);
@@ -129,7 +198,6 @@ export const exportToPDF = (
     yPosition += 6;
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "normal");
-    const actionLines = doc.splitTextToSize(update.dev_action, contentWidth - 10);
     actionLines.forEach((line: string) => {
       doc.text(line, margin + 5, yPosition);
       yPosition += 5;
@@ -178,10 +246,11 @@ export const exportToPDF = (
           doc.addPage();
           yPosition = 20;
         }
-        const truncatedTitle = source.title.length > 60 
-          ? source.title.substring(0, 60) + "..." 
-          : source.title;
-        doc.text(`• ${truncatedTitle}`, margin + 5, yPosition);
+        const sanitizedTitle = sanitizeText(source.title);
+        const truncatedTitle = sanitizedTitle.length > 60 
+          ? sanitizedTitle.substring(0, 60) + "..." 
+          : sanitizedTitle;
+        doc.text(`- ${truncatedTitle}`, margin + 5, yPosition);
         yPosition += 5;
       });
     }
@@ -202,6 +271,7 @@ export const exportToPDF = (
   }
 
   // Save
-  const fileName = `RegWatch_${update.title.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30)}_${Date.now()}.pdf`;
+  const sanitizedTitle = sanitizeText(update.title).replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30);
+  const fileName = `RegWatch_${sanitizedTitle}_${Date.now()}.pdf`;
   doc.save(fileName);
 };
