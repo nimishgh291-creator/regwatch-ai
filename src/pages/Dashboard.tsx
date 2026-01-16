@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Bot, Menu, X, AlertTriangle, CheckCircle, Info, ArrowUpRight, Loader2, Send, Timer, Search, Filter } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PageTransition from "@/components/PageTransition";
 import SubscribeWidget from "@/components/SubscribeWidget";
 import MobileAIChatSheet from "@/components/MobileAIChatSheet";
-import UpdateDetailModal from "@/components/UpdateDetailModal";
 
 interface RegulatoryUpdate {
   id: number;
@@ -48,11 +47,10 @@ const riskConfig = {
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [updates, setUpdates] = useState<RegulatoryUpdate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUpdate, setSelectedUpdate] = useState<RegulatoryUpdate | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -179,12 +177,27 @@ const Dashboard = () => {
           },
           body: JSON.stringify({
             messages: [...messages, { role: "user", content: userMessage }],
-            context: null,
+            context: {
+              title: "General Regulatory Query",
+              summary: "User is asking a general question about RBI/SEBI regulations",
+              detailed_analysis: [],
+              dev_action: null,
+              risk_level: null,
+            },
           }),
         }
       );
 
-      if (!response.ok) throw new Error("Failed to get response");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
+        if (response.status === 402) {
+          throw new Error("Please add credits to continue using AI features.");
+        }
+        throw new Error(errorData.error || "Failed to get response from AI");
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -239,7 +252,7 @@ const Dashboard = () => {
         ...prev,
         {
           role: "assistant",
-          content: "Sorry, I encountered an error. Please try again.",
+          content: error instanceof Error ? error.message : "Sorry, I encountered an error. Please try again.",
         },
       ]);
     } finally {
@@ -248,8 +261,7 @@ const Dashboard = () => {
   };
 
   const handleCardClick = (update: RegulatoryUpdate) => {
-    setSelectedUpdate(update);
-    setIsModalOpen(true);
+    navigate(`/update/${update.id}`);
   };
 
   return (
@@ -568,20 +580,11 @@ const Dashboard = () => {
           )}
         </main>
 
-        {/* Detail Modal */}
-        <UpdateDetailModal
-          update={selectedUpdate}
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setTimeout(() => setSelectedUpdate(null), 300);
-          }}
-        />
 
         {/* Footer */}
         <footer className="fixed bottom-0 left-0 right-0 lg:left-80 py-3 px-4 lg:px-8 bg-background/80 backdrop-blur-lg border-t border-white/5">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <p>© 2025 RegWatch AI. Built by Nimish Kalsi.</p>
+            <p>© 2026 RegWatch AI. Built by Nimish Kalsi.</p>
             <div className="flex items-center gap-4">
               <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
               <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>

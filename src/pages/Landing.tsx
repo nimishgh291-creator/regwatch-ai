@@ -250,7 +250,7 @@ const Landing = () => {
               <span className="font-bold">RegWatch AI</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2025 RegWatch AI. Built by Nimish Kalsi.
+              © 2026 RegWatch AI. Built by Nimish Kalsi.
             </p>
             <div className="flex items-center gap-4 text-sm">
               <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">

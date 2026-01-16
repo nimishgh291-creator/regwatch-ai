@@ -2,8 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -152,7 +150,7 @@ const generateEmailHtml = (update: RegulatoryUpdate): string => {
               <p style="margin: 0; color: #6b7280; font-size: 12px; text-align: center; line-height: 1.6;">
                 You're receiving this because you subscribed to RegWatch AI regulatory alerts.
                 <br>
-                © 2025 RegWatch AI. Built by Nimish Kalsi.
+                © 2026 RegWatch AI. Built by Nimish Kalsi.
               </p>
             </td>
           </tr>
@@ -173,6 +171,21 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Check for Resend API key
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email service not configured. Please add RESEND_API_KEY secret." }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const resend = new Resend(resendApiKey);
+    
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
