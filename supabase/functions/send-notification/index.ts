@@ -31,7 +31,13 @@ const getRiskColor = (riskLevel: string | null): string => {
   }
 };
 
-const generateEmailHtml = (update: RegulatoryUpdate): string => {
+const generateUnsubscribeUrl = (email: string): string => {
+  const token = btoa(email).replace(/[^a-zA-Z0-9]/g, "");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://ybswkkhufynqjfdxkbtm.supabase.co";
+  return `${supabaseUrl}/functions/v1/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
+};
+
+const generateEmailHtml = (update: RegulatoryUpdate, unsubscribeUrl: string): string => {
   const riskColor = getRiskColor(update.risk_level);
   
   return `
@@ -136,7 +142,7 @@ const generateEmailHtml = (update: RegulatoryUpdate): string => {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
           <tr>
             <td style="padding-top: 28px; text-align: center;">
-              <a href="https://regwatchai.lovable.app/dashboard" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 10px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);">
+              <a href="https://regwatchai.lovable.app/update/${update.id}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 10px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);">
                 View Full Details →
               </a>
             </td>
@@ -150,6 +156,8 @@ const generateEmailHtml = (update: RegulatoryUpdate): string => {
               <p style="margin: 0; color: #6b7280; font-size: 12px; text-align: center; line-height: 1.6;">
                 You're receiving this because you subscribed to RegWatch AI regulatory alerts.
                 <br>
+                <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline;">Unsubscribe from these emails</a>
+                <br><br>
                 © 2026 RegWatch AI. Built by Nimish Kalsi.
               </p>
             </td>
@@ -218,36 +226,52 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Found ${subscribers.length} active subscribers`);
 
-    const emailHtml = generateEmailHtml(update);
     const riskEmoji = update.risk_level === "high" ? "🚨" : update.risk_level === "medium" ? "⚠️" : "ℹ️";
 
-    // Send emails in batches to avoid rate limits
-    const batchSize = 50;
+    // Send emails individually to include personalized unsubscribe links
     const results = [];
+    let successCount = 0;
+    let errorCount = 0;
 
-    for (let i = 0; i < subscribers.length; i += batchSize) {
-      const batch = subscribers.slice(i, i + batchSize);
-      const batchEmails = batch.map((s) => s.email);
+    for (const subscriber of subscribers) {
+      const unsubscribeUrl = generateUnsubscribeUrl(subscriber.email);
+      const emailHtml = generateEmailHtml(update, unsubscribeUrl);
 
       try {
         const emailResponse = await resend.emails.send({
           from: "RegWatch AI <alerts@resend.dev>",
-          to: batchEmails,
+          to: [subscriber.email],
           subject: `${riskEmoji} ${update.title} - RegWatch AI Alert`,
           html: emailHtml,
         });
 
-        console.log(`Batch ${i / batchSize + 1} sent successfully:`, emailResponse);
-        results.push({ batch: i / batchSize + 1, status: "success", response: emailResponse });
-      } catch (batchError) {
-        console.error(`Batch ${i / batchSize + 1} failed:`, batchError);
-        results.push({ batch: i / batchSize + 1, status: "error", error: batchError });
+        // Check if Resend returned an error in the response
+        if (emailResponse.error) {
+          console.error(`Resend error for ${subscriber.email}:`, emailResponse.error);
+          errorCount++;
+          results.push({ email: subscriber.email, status: "error", error: emailResponse.error.message });
+        } else {
+          successCount++;
+          results.push({ email: subscriber.email, status: "success", id: emailResponse.data?.id });
+        }
+        
+        // Add small delay to avoid rate limiting (max 2 requests/second for free tier)
+        await new Promise(resolve => setTimeout(resolve, 550));
+      } catch (emailError: any) {
+        console.error(`Failed to send to ${subscriber.email}:`, emailError);
+        errorCount++;
+        results.push({ email: subscriber.email, status: "error", error: emailError.message || emailError });
       }
     }
 
+    console.log(`Email sending complete: ${successCount} success, ${errorCount} errors`);
+
     return new Response(
       JSON.stringify({ 
-        message: `Notifications sent to ${subscribers.length} subscribers`,
+        message: `Notifications sent: ${successCount} success, ${errorCount} failed`,
+        total: subscribers.length,
+        successCount,
+        errorCount,
         results 
       }),
       {
