@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Shield, ArrowRight, Radar, Brain, Bell, CheckCircle, Play, Sparkles } from "lucide-react";
+import { Shield, ArrowRight, Radar, Brain, Bell, CheckCircle, Play, Sparkles, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SubscribeWidget from "@/components/SubscribeWidget";
+import ThemeToggle from "@/components/ThemeToggle";
 import dashboardMockup from "@/assets/dashboard-mockup.png";
 
 const Landing = () => {
@@ -36,6 +37,35 @@ const Landing = () => {
     { step: "03", title: "Act", description: "Get actionable insights for your team" },
   ];
 
+  const testimonials = [
+    {
+      quote: "RegWatch AI has transformed how our compliance team operates. We catch regulatory updates within minutes instead of days.",
+      author: "Priya Sharma",
+      role: "Head of Compliance",
+      company: "PayFast India",
+    },
+    {
+      quote: "The AI-powered risk assessment saves us hours of manual review. It's like having a compliance expert on call 24/7.",
+      author: "Rajesh Kumar",
+      role: "CTO",
+      company: "LendTech Solutions",
+    },
+    {
+      quote: "Finally, a tool built for developers. The action items are clear and specific to our tech stack.",
+      author: "Ananya Patel",
+      role: "Engineering Lead",
+      company: "FinServe Pro",
+    },
+  ];
+
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar */}
@@ -50,13 +80,32 @@ const Landing = () => {
             </Link>
             
             <nav className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a 
+                href="#features" 
+                onClick={(e) => scrollToSection(e, "features")}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Features
               </a>
-              <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a 
+                href="#how-it-works" 
+                onClick={(e) => scrollToSection(e, "how-it-works")}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 How it Works
               </a>
-              <a href="#subscribe" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a 
+                href="#testimonials" 
+                onClick={(e) => scrollToSection(e, "testimonials")}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Testimonials
+              </a>
+              <a 
+                href="#subscribe" 
+                onClick={(e) => scrollToSection(e, "subscribe")}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Subscribe
               </a>
               <Link to="/founder" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -64,12 +113,15 @@ const Landing = () => {
               </Link>
             </nav>
 
-            <Link to="/dashboard">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                Go to Dashboard
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Link to="/dashboard">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -187,7 +239,7 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 relative">
+      <section id="features" className="py-24 relative scroll-mt-20">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -228,7 +280,7 @@ const Landing = () => {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 relative bg-muted/30">
+      <section id="how-it-works" className="py-24 relative bg-muted/30 scroll-mt-20">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -273,8 +325,61 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-24 relative scroll-mt-20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <span className="inline-block px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full mb-4">
+              Testimonials
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Loved by fintech teams
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              See what compliance and engineering teams are saying about RegWatch AI.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {testimonials.map((testimonial, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="p-6 rounded-2xl bg-card border border-border"
+              >
+                <Quote className="h-8 w-8 text-primary/30 mb-4" />
+                <p className="text-foreground mb-6 leading-relaxed">
+                  "{testimonial.quote}"
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-primary">
+                      {testimonial.author.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{testimonial.author}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {testimonial.role}, {testimonial.company}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Subscribe Section */}
-      <section id="subscribe" className="py-24 relative">
+      <section id="subscribe" className="py-24 relative scroll-mt-20">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

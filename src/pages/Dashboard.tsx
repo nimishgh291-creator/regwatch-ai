@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PageTransition from "@/components/PageTransition";
 import SubscribeWidget from "@/components/SubscribeWidget";
 import MobileAIChatSheet from "@/components/MobileAIChatSheet";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface RegulatoryUpdate {
   id: number;
@@ -280,6 +281,7 @@ const Dashboard = () => {
               <span className="font-bold">RegWatch</span>
             </Link>
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <MobileAIChatSheet>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Bot className="h-4 w-4" />
@@ -336,12 +338,15 @@ const Dashboard = () => {
 
         {/* Desktop Sidebar */}
         <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-72 border-r border-border bg-card p-4 flex-col z-40">
-          <Link to="/" className="flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <Shield className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg">RegWatch</span>
-          </Link>
+          <div className="flex items-center justify-between mb-6">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+                <Shield className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <span className="font-bold text-lg">RegWatch</span>
+            </Link>
+            <ThemeToggle />
+          </div>
 
           {/* AI Chat Section */}
           <div className="flex-1 flex flex-col min-h-0">
