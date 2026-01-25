@@ -83,16 +83,16 @@ const SubscribeWidget = () => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-4 rounded-2xl glass-card"
+      className="p-4 rounded-xl bg-card border border-border"
     >
-      <div className="flex items-center gap-2 mb-3">
-        <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary">
-          <Bell className="h-4 w-4 text-primary-foreground" />
+      <div className="flex items-center gap-2 mb-2">
+        <div className="p-1.5 rounded-lg bg-primary/10">
+          <Bell className="h-4 w-4 text-primary" />
         </div>
         <h3 className="text-sm font-semibold">Subscribe to Updates</h3>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Get real-time regulatory alerts directly to your inbox. No account needed.
+        Get regulatory alerts directly to your inbox.
       </p>
       <form onSubmit={handleSubscribe} className="flex gap-2">
         <div className="relative flex-1">
@@ -102,15 +102,14 @@ const SubscribeWidget = () => {
             placeholder="your@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="pl-9 h-9 text-sm bg-muted/50 border-white/10"
+            className="pl-9 h-9 text-sm bg-background"
           />
         </div>
         <Button
           type="submit"
           size="sm"
-          variant="hero"
           disabled={isLoading || !email.trim()}
-          className="h-9 px-4"
+          className="h-9 px-4 bg-primary hover:bg-primary/90"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Subscribe"}
         </Button>
